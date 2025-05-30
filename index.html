@@ -43,40 +43,53 @@
       }
 
       const linhas = [];
-      const hoje = "30052025"; // Exemplo: data de geração
+      const hoje = "30052025"; // Data da geração
       const vencimentoPadrao = "30062025";
 
+      // HEADER DE ARQUIVO
       linhas.push("03300000        1000011111111111205000003225470                         TESTE                         BANCO SANTANDER                         " + hoje + "      000001040                                                      ");
+
+      // HEADER DE LOTE
       linhas.push("03300011R01  030 1000011111111111                    205000003225470     TESTE                                                                                                         00000001" + hoje + "                                          ");
 
       let seq = 1;
 
       dadosPlanilha.forEach((item, index) => {
         const venc = item.Vencimento || vencimentoPadrao;
-        const valor = item.Valor || "000000000010000";
-        const desconto = item.Desconto || "000000000000000";
+        const valor = String(Math.round(parseFloat(item.Valor || "0") * 100)).padStart(15, '0');
+
+        // Desconto: lido em reais, convertido para centavos e formatado
+        let descontoValor = 0;
+        if (item.Desconto && !isNaN(item.Desconto)) {
+          descontoValor = Math.round(parseFloat(item.Desconto) * 100);
+        }
+        const desconto = String(descontoValor).padStart(13, '0');
+
         const nome = (item.Nome || "CLIENTE").padEnd(30, ' ').substring(0, 30);
         const endereco = (item.Endereco || "ENDERECO,123").padEnd(40, ' ').substring(0, 40);
         const bairro = (item.Bairro || "CENTRO").padEnd(15, ' ').substring(0, 15);
         const cidade = (item.Cidade || "GOIANIA").padEnd(15, ' ').substring(0, 15);
-        const cep = item.CEP || "00000000";
+        const cep = (item.CEP || "00000000").substring(0, 8);
         const uf = (item.UF || "GO").substring(0, 2);
-        const doc = String(item.CPFCNPJ).padStart(15, '0');
+        const doc = String(item.CPFCNPJ || "").padStart(15, '0');
 
         // SEGMENTO P
         linhas.push(`03300013${String(seq).padStart(5, '0')}P 01AGCCONTAAGDCONTADVNNNNNNNNNNNNN  0000000000${valor}  ${nome}         ${venc}000000000000000004N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000           `);
         seq++;
 
         // SEGMENTO Q
-        linhas.push(`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep.padEnd(8)}${cidade}${uf}0000000000000000                                        000000000000                   `);
+        linhas.push(`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep}${cidade}${uf}0000000000000000                                        000000000000                   `);
         seq++;
 
-        // SEGMENTO R
+        // SEGMENTO R (opcional, aqui vazio mas mantido)
         linhas.push(`03300013${String(seq).padStart(5, '0')}R 01000000000000000000000000                        200000000000000000000000                                                                                                                                                        `);
         seq++;
       });
 
+      // TRAILER DO LOTE
       linhas.push(`03300015         ${String(seq + 2).padStart(6, '0')}                                                                                                                                                                                                                         `);
+
+      // TRAILER DO ARQUIVO
       linhas.push(`03399999         000001${String(seq + 4).padStart(6, '0')}                                                                                                                                                                                                                   `);
 
       const blob = new Blob([linhas.join("\r\n")], { type: "text/plain;charset=utf-8" });
