@@ -79,7 +79,7 @@
         const endereco = (item.Endereco || "ENDERECO,123").padEnd(40, ' ').substring(0, 40);
         const bairro = (item.Bairro || "CENTRO").padEnd(15, ' ').substring(0, 15);
         const cidade = (item.Cidade || "GOIANIA").padEnd(15, ' ').substring(0, 15);
-        const cep = (item.CEP || "00000000").substring(0, 8);
+        const cep = String(item.CEP || "00000000").padStart(8, '0').substring(0, 8);
         const uf = (item.UF || "GO").substring(0, 2);
         const doc = String(item.CPFCNPJ || "").padStart(15, '0');
 
