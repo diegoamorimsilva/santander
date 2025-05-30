@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerador CNAB240 - Santander</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="card shadow rounded-4">
+      <div class="card-body">
+        <h3 class="card-title text-center mb-4">Gerador de Remessa CNAB240 - Santander</h3>
+        <div class="mb-3">
+          <label for="excelFile" class="form-label">Selecione o arquivo Excel (.xlsx)</label>
+          <input type="file" id="excelFile" class="form-control" accept=".xlsx, .xls">
+        </div>
+        <button onclick="gerarRemessa()" class="btn btn-primary w-100">Gerar Arquivo de Remessa</button>
+        <div id="output" class="mt-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let dadosPlanilha = [];
+
+    document.getElementById('excelFile').addEventListener('change', function(e) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        dadosPlanilha = XLSX.utils.sheet_to_json(sheet);
+        document.getElementById("output").innerHTML = `<div class="alert alert-success">Arquivo carregado com sucesso. ${dadosPlanilha.length} registros encontrados.</div>`;
+      };
+      reader.readAsArrayBuffer(e.target.files[0]);
+    });
+
+    function gerarRemessa() {
+      if (dadosPlanilha.length === 0) {
+        alert("Carregue um arquivo Excel antes de gerar a remessa.");
+        return;
+      }
+
+      const linhas = [];
+      const hoje = "30052025"; // Exemplo: data de geração
+      const vencimentoPadrao = "30062025";
+
+      linhas.push("03300000        1000011111111111205000003225470                         TESTE                         BANCO SANTANDER                         " + hoje + "      000001040                                                      ");
+      linhas.push("03300011R01  030 1000011111111111                    205000003225470     TESTE                                                                                                         00000001" + hoje + "                                          ");
+
+      let seq = 1;
+
+      dadosPlanilha.forEach((item, index) => {
+        const venc = item.Vencimento || vencimentoPadrao;
+        const valor = item.Valor || "000000000010000";
+        const desconto = item.Desconto || "000000000000000";
+        const nome = (item.Nome || "CLIENTE").padEnd(30, ' ').substring(0, 30);
+        const endereco = (item.Endereco || "ENDERECO,123").padEnd(40, ' ').substring(0, 40);
+        const bairro = (item.Bairro || "CENTRO").padEnd(15, ' ').substring(0, 15);
+        const cidade = (item.Cidade || "GOIANIA").padEnd(15, ' ').substring(0, 15);
+        const cep = item.CEP || "00000000";
+        const uf = (item.UF || "GO").substring(0, 2);
+        const doc = String(item.CPFCNPJ).padStart(15, '0');
+
+        // SEGMENTO P
+        linhas.push(`03300013${String(seq).padStart(5, '0')}P 01AGCCONTAAGDCONTADVNNNNNNNNNNNNN  0000000000${valor}  ${nome}         ${venc}000000000000000004N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000           `);
+        seq++;
+
+        // SEGMENTO Q
+        linhas.push(`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep.padEnd(8)}${cidade}${uf}0000000000000000                                        000000000000                   `);
+        seq++;
+
+        // SEGMENTO R
+        linhas.push(`03300013${String(seq).padStart(5, '0')}R 01000000000000000000000000                        200000000000000000000000                                                                                                                                                        `);
+        seq++;
+      });
+
+      linhas.push(`03300015         ${String(seq + 2).padStart(6, '0')}                                                                                                                                                                                                                         `);
+      linhas.push(`03399999         000001${String(seq + 4).padStart(6, '0')}                                                                                                                                                                                                                   `);
+
+      const blob = new Blob([linhas.join("\r\n")], { type: "text/plain;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "remessa_cnab240.txt";
+      link.click();
+    }
+  </script>
+</body>
+</html>
