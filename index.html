@@ -48,16 +48,16 @@
       const digitoConta = "9";
       const convenio = "673741";
       const codTransmissao = agencia + convenio.padStart(11, '0');
-      const nomeEmpresa = "JM SERVICOS FINANCEIROS LTDA ME".padEnd(30, ' ').substring(0, 30);
+      const nomeEmpresa = "JM SERVICOS FINANCEIROS LTDA".padEnd(30, ' ');
       const cnpj = "60173318000104";
       const hoje = "30052025";
       const vencimentoPadrao = "30062025";
 
       const linhas = [];
 
-      linhas.push(`03300000        1${cnpj} ${codTransmissao}                         ${nomeEmpresa}                         BANCO SANTANDER                         ${hoje}      000001040                                                      `);
+      linhas.push((`03300000        1${cnpj} ${codTransmissao}                         ${nomeEmpresa}                         BANCO SANTANDER                         ${hoje}      000001040`).padEnd(240, ' '));
 
-      linhas.push(`03300011R01  030 1${cnpj}                    ${codTransmissao}     ${nomeEmpresa}                                                                                                         00000001${hoje}                                          `);
+      linhas.push((`03300011R01  030 1${cnpj}                    ${codTransmissao}     ${nomeEmpresa}                                                                                                         00000001${hoje}`).padEnd(240, ' '));
 
       let seq = 1;
 
@@ -80,22 +80,24 @@
         const uf = (item.UF || "GO").substring(0, 2);
         const doc = String(item.CPFCNPJ || "").padStart(15, '0');
 
+        const nossoNumero = String(index + 1).padStart(13, '0');
+        const numeroDocumento = String(index + 1).padStart(11, '0');
+
         const multa = String(Math.round(valorBase * 0.02 * 100)).padStart(15, '0'); // 2%
         const jurosDia = String(Math.round(valorBase * 0.00033 * 100)).padStart(15, '0'); // 0.033%
 
-        linhas.push(`03300013${String(seq).padStart(5, '0')}P 01${agencia}${digitoAgencia}${conta.padStart(9, '0')}${digitoConta}               0000000000${valor}  ${nome}         ${venc}000000000000000004N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000           `);
+        linhas.push((`03300013${String(seq).padStart(5, '0')}P 01${agencia}${digitoAgencia}${conta.padStart(9, '0')}${digitoConta}${nossoNumero}  ${numeroDocumento}${valor}  ${nome}         ${venc}000000000000000004N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000`).padEnd(240, ' '));
         seq++;
 
-        linhas.push(`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep}${cidade}${uf}0000000000000000                                        000000000000                   `);
+        linhas.push((`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep}${cidade}${uf}0000000000000000                                        000000000000`).padEnd(240, ' '));
         seq++;
 
-        linhas.push(`03300013${String(seq).padStart(5, '0')}R 0101${venc}${jurosDia}2${venc}${multa}000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000`);
+        linhas.push((`03300013${String(seq).padStart(5, '0')}R 0101${venc}${jurosDia}2${venc}${multa}`).padEnd(240, ' '));
         seq++;
       });
 
-      linhas.push(`03300015         ${String(seq + 2).padStart(6, '0')}                                                                                                                                                                                                                         `);
-
-      linhas.push(`03399999         000001${String(seq + 4).padStart(6, '0')}                                                                                                                                                                                                                   `);
+      linhas.push((`03300015         ${String(seq + 2).padStart(6, '0')}`).padEnd(240, ' '));
+      linhas.push((`03399999         000001${String(seq + 4).padStart(6, '0')}`).padEnd(240, ' '));
 
       const blob = new Blob([linhas.join("\r\n")], { type: "text/plain;charset=utf-8" });
       const link = document.createElement("a");
