@@ -81,18 +81,21 @@
         const doc = String(item.CPFCNPJ || "").padStart(15, '0');
 
         const nossoNumero = String(index + 1).padStart(13, '0');
-        const numeroDocumento = String(index + 1).padStart(11, '0');
+        const numeroDocumento = String(index + 1).padStart(15, '0');
 
         const multa = String(Math.round(valorBase * 0.02 * 100)).padStart(15, '0'); // 2%
         const jurosDia = String(Math.round(valorBase * 0.00033 * 100)).padStart(15, '0'); // 0.033%
 
-        linhas.push((`03300013${String(seq).padStart(5, '0')}P 01${agencia}${digitoAgencia}${conta.padStart(9, '0')}${digitoConta}${nossoNumero}  ${numeroDocumento}${valor}  ${nome}         ${venc}000000000000000004N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000`).padEnd(240, ' '));
+        const linhaP = `03300013${String(seq).padStart(5, '0')}P 01${agencia}${digitoAgencia}${conta.padStart(9, '0')}${digitoConta}${nossoNumero.padEnd(20, ' ')}${numeroDocumento}${valor}${nome}${venc}000000000000000001N${hoje}${venc}00000000000000001${venc}${desconto}000000000000000000000000000000000                         000200000`;
+        linhas.push(linhaP.padEnd(240, ' '));
         seq++;
 
-        linhas.push((`03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep}${cidade}${uf}0000000000000000                                        000000000000`).padEnd(240, ' '));
+        const linhaQ = `03300013${String(seq).padStart(5, '0')}Q 01${doc.length > 11 ? '2' : '1'}${doc}${nome.padEnd(40)}${endereco}${bairro}${cep}${cidade}${uf}0000000000000000                                        000000000000`;
+        linhas.push(linhaQ.padEnd(240, ' '));
         seq++;
 
-        linhas.push((`03300013${String(seq).padStart(5, '0')}R 0101${venc}${jurosDia}2${venc}${multa}`).padEnd(240, ' '));
+        const linhaR = `03300013${String(seq).padStart(5, '0')}R 0101${venc}${jurosDia}2${venc}${multa}`;
+        linhas.push(linhaR.padEnd(240, ' '));
         seq++;
       });
 
